@@ -16,24 +16,24 @@ func main() {
 	utils.FailOnError(err, "Failed to open channel")
 	defer ch.Close()
 
-	q, err := ch.QueueDeclare(
-		"queue1", 	 // name
-		true,        // durable (in case the RabbitMQ server crashes)
-		false,       // delete when usused
-		false,       // exclusive
-		false,       // no-wait
-		nil,         // arguments
+	err = ch.ExchangeDeclare(
+		"logs",   // name
+		"fanout", // type
+		true,     // durable
+		false,    // auto-deleted
+		false,    // internal
+		false,    // no-wait
+		nil,      // arguments
 	)
-	utils.FailOnError(err, "Failed to declare a queue")
+	utils.FailOnError(err, "Failed to declare an exchange")
 
 	body := utils.BodyFrom(os.Args)
 	err = ch.Publish(
-		"",
-		q.Name,
-		false,
-		false,
+		"logs",		// exchange
+		"",				// routing key (ignored with fanout type exchange)
+		false,		// mandatory
+		false,		// immediate
 		amqp.Publishing{
-			DeliveryMode: amqp.Persistent,	// tries to save message on disk in case it is lost (not perfect persistence though)
 			ContentType: "text/plain",
 			Body:        []byte(body),
 		},

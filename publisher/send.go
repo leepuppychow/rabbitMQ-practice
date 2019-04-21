@@ -1,6 +1,9 @@
 package main
 
 import (
+	"log"
+	"os"
+
 	"github.com/leepuppychow/rabbitMQ-practice/utils"
 	"github.com/streadway/amqp"
 )
@@ -14,25 +17,27 @@ func main() {
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
-		"testChan1",
-		false,
-		false,
-		false,
-		false,
-		nil,
+		"queue1", 	 // name
+		true,        // durable (in case the RabbitMQ server crashes)
+		false,       // delete when usused
+		false,       // exclusive
+		false,       // no-wait
+		nil,         // arguments
 	)
 	utils.FailOnError(err, "Failed to declare a queue")
 
-	messageBody := "HELLO WORLD!"
+	body := utils.BodyFrom(os.Args)
 	err = ch.Publish(
 		"",
 		q.Name,
 		false,
 		false,
 		amqp.Publishing{
+			DeliveryMode: amqp.Persistent,	// tries to save message on disk in case it is lost (not perfect persistence though)
 			ContentType: "text/plain",
-			Body:        []byte(messageBody),
+			Body:        []byte(body),
 		},
 	)
 	utils.FailOnError(err, "Failed to publish message")
+	log.Printf("Sent %s", body)
 }

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"log"
+	"time"
 
 	"github.com/leepuppychow/rabbitMQ-practice/utils"
 )
@@ -15,8 +17,8 @@ func main() {
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
-		"testChan1", // name
-		false,       // durable
+		"queue1", 	 // name
+		true,       // durable
 		false,       // delete when usused
 		false,       // exclusive
 		false,       // no-wait
@@ -25,13 +27,13 @@ func main() {
 	utils.FailOnError(err, "Failed to declare a queue")
 
 	messages, err := ch.Consume(
-		q.Name,
-		"",
-		true,
-		false,
-		false,
-		false,
-		nil,
+		q.Name,	// queue
+		"",			// consumer
+		false,	// sets auto-acknowledgement to false
+		false,	// exclusive
+		false,	// no-local
+		false,	// no-wait
+		nil,		// args
 	)
 	utils.FailOnError(err, "Failed to register consumer")
 
@@ -40,9 +42,14 @@ func main() {
 	go func() {
 		for d := range messages {
 			log.Printf("Received a message: %s", d.Body)
+			dot_count := bytes.Count(d.Body, []byte("."))
+			t := time.Duration(dot_count)
+			time.Sleep(t * time.Second)
+			log.Printf("Done")
+			d.Ack(false)	// Here we manually acknowledge worker is done with task
 		}
 	}()
 
 	log.Printf("Waiting for a message. To exit press CTRL+C")
-	<-forever	// Note: here waiting to receive from an empty channel, so main goroutine is blocked forever
+	<-forever // Note: here waiting to receive from an empty channel, so main goroutine is blocked forever
 }

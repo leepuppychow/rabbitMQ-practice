@@ -8,7 +8,7 @@
 
 ![alt text](./work-queue.png "Work Queue Img")
 
-  * Install RabbitMW
+  * Install RabbitMQ
   * Start RabbitMQ locally: `rabbitmq-server`
   * In one shell publish a message with: `go run work-queue/publisher/send.go some message...`
   * In as many shells you want, run this to start a worker to listen to queue: `go run work-queue/consumer/worker.go`
